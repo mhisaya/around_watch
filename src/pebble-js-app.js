@@ -160,12 +160,12 @@ function executeGeoCode(pos){
 
 function locationSuccess(pos) {
   
-  pos={
-    coords: {
-      latitude: 34.966671,
-      longitude: 138.933334
-    }
-  };
+//   pos={
+//     coords: {
+//       latitude: 34.966671,
+//       longitude: 138.933334
+//     }
+//   };
   
   console.log('Location changed!!');
   console.log('lat= ' + pos.coords.latitude + ' lon= ' + pos.coords.longitude);
