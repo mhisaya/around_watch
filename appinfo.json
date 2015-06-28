@@ -1,0 +1,32 @@
+{
+    "appKeys": {
+        "KEY_CITY": 5,
+        "KEY_RAINFALL": 6
+    },
+    "capabilities": [
+        "location"
+    ],
+    "companyName": "mhisaya+kickstarter@gmail.com",
+    "longName": "AROUND WATCH",
+    "projectType": "native",
+    "resources": {
+        "media": [
+            {
+                "characterRegex": "[0-9A-Za-z]",
+                "file": "fonts/pf_tempesta_seven.ttf",
+                "name": "FONT_TEMPESTA_SEVEN_8",
+                "type": "font"
+            }
+        ]
+    },
+    "sdkVersion": "3",
+    "shortName": "AROUND WATCH",
+    "targetPlatforms": [
+        "basalt"
+    ],
+    "uuid": "0b14df1a-b3a4-4442-8ef7-e6ba841d1050",
+    "versionLabel": "0.2",
+    "watchapp": {
+        "watchface": true
+    }
+}
