@@ -5,15 +5,30 @@ static struct Base {
   Layer *canvasLayer;
   Layer *minutesLayer;
   Layer *calendarLayer;
+  BitmapLayer *weatherIcon1Layer;
+  BitmapLayer *weatherIcon2Layer;
+  BitmapLayer *weatherIcon3Layer;
   
   GFont calFont;
+  
+  GBitmap *weatherIcon01;
+  GBitmap *weatherIcon02;
+  GBitmap *weatherIcon03;
+  GBitmap *weatherIcon04;
+  GBitmap *weatherIcon09;
+  GBitmap *weatherIcon10;
+  GBitmap *weatherIcon11;
+  GBitmap *weatherIcon13;
+  GBitmap *weatherIcon50;
+  
   char *location;
   int32_t rainfall;
+  char *weatherCondition;
   
   time_t currentTime;
   
   AppSync sync;
-  uint8_t syncBuffer[256];
+  uint8_t syncBuffer[512];
   time_t lastSync;
   
   
@@ -21,6 +36,7 @@ static struct Base {
 
 #define KEY_CITY 5
 #define KEY_RAINFALL 6
+#define KEY_WEATHER_CONDITION 7
 
 uint8_t minutesRadius=12;
 
@@ -133,6 +149,45 @@ static void minutesLayer_update_proc(Layer *this_layer, GContext *ctx) {
                     );
 }
 
+static GBitmap *getWeatherIcon(uint8_t offset){
+  
+  uint8_t pos=offset*7;
+  uint8_t icon=(base.weatherCondition[pos]-'0')*10+base.weatherCondition[pos+1]-'0';
+
+  GBitmap *iconBitmap;
+  switch (icon){
+    case 1:
+      iconBitmap=base.weatherIcon01;
+      break;
+    case 2:
+      iconBitmap=base.weatherIcon02;
+      break;
+    case 3:
+      iconBitmap=base.weatherIcon03;
+      break;
+    case 4:
+      iconBitmap=base.weatherIcon04;
+      break;
+    case 9:
+      iconBitmap=base.weatherIcon09;
+      break;
+    case 10:
+      iconBitmap=base.weatherIcon10;
+      break;
+    case 11:
+      iconBitmap=base.weatherIcon11;
+      break;
+    case 13:
+      iconBitmap=base.weatherIcon13;
+      break;
+    case 50:
+    default:
+      iconBitmap=base.weatherIcon50;
+      break;
+  }
+  return iconBitmap; 
+}
+
 static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   GRect bounds = layer_get_bounds(this_layer);
@@ -170,14 +225,19 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   graphics_fill_rect(ctx,bounds,0,GCornerNone);
   
   graphics_context_set_text_color(ctx, GColorBlack);
-  GRect textFrame = GRect(30,30,80,40);
+  GRect textFrame = GRect(30,16,80,20);
       graphics_draw_text(ctx,base.location,fonts_get_system_font(FONT_KEY_GOTHIC_18),
                      textFrame,
                      GTextOverflowModeTrailingEllipsis ,
                      GTextAlignmentCenter ,
                      NULL
-                    );
-  GRect textFrame2 = GRect(30,80,40,10);
+                    );  
+
+//   bitmap_layer_set_bitmap(base.weatherIcon1Layer,getWeatherIcon(0));
+//   bitmap_layer_set_bitmap(base.weatherIcon2Layer,getWeatherIcon(1));
+//   bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
+  
+  GRect textFrame2 = GRect(30,70,25,10);
   char rainFallStr[10];
   snprintf(rainFallStr,10,"%ld",base.rainfall);
       graphics_draw_text(ctx,rainFallStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
@@ -187,11 +247,19 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  GRect textFrame3 = GRect(80,80,40,10);
+  GRect textFrame3 = GRect(60,70,15,10);
   char errorStr[10];
   snprintf(errorStr,10,"%ld", (time(NULL)-base.lastSync)/60 );
       graphics_draw_text(ctx,errorStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
                      textFrame3,
+                     GTextOverflowModeTrailingEllipsis ,
+                     GTextAlignmentCenter ,
+                     NULL
+                    );
+  
+  GRect textFrame4 = GRect(20,82,100,10);
+      graphics_draw_text(ctx,base.weatherCondition,fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                     textFrame4,
                      GTextOverflowModeTrailingEllipsis ,
                      GTextAlignmentCenter ,
                      NULL
@@ -275,11 +343,46 @@ static void main_window_load(Window *window){
   layer_set_update_proc(base.minutesLayer, minutesLayer_update_proc);
   
   base.calFont = fonts_load_custom_font(resource_get_handle(RESOURCE_ID_FONT_TEMPESTA_SEVEN_8));
+  
+//   base.weatherIcon01 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_SUN_RAYS_SMALL_01);
+//   base.weatherIcon02 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_SUN_RAYS_SMALL_CLOUD_02);
+//   base.weatherIcon03 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_CLOUD_03);
+//   base.weatherIcon04 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_CLOUD_DARK_04);
+//   base.weatherIcon09 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_CLOUD_DARK_RAIN_09);
+//   base.weatherIcon10 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_SUN_RAY_CLOUD_DRIZZLE_10);
+//   base.weatherIcon11 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_CLOUD_DARK_MULTIPLE_LIGHTNING_11);
+//   base.weatherIcon13 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_CLOUD_DARK_SNOW_13);
+//   base.weatherIcon50 = gbitmap_create_with_resource(RESOURCE_ID_IMAGE_WEATHER_CLOUD_DARK_FOG_50);
+  
+//   base.weatherIcon1Layer = bitmap_layer_create(GRect(16, 30, 36, 36));
+//   layer_add_child(base.canvasLayer,bitmap_layer_get_layer(base.weatherIcon1Layer));
+//   bitmap_layer_set_compositing_mode(base.weatherIcon1Layer,GCompOpSet);
+  
+//   base.weatherIcon2Layer = bitmap_layer_create(GRect(54, 30, 36, 36));
+//   layer_add_child(base.canvasLayer,bitmap_layer_get_layer(base.weatherIcon2Layer));
+//   bitmap_layer_set_compositing_mode(base.weatherIcon2Layer,GCompOpSet);
+  
+//   base.weatherIcon3Layer = bitmap_layer_create(GRect(92, 30, 36, 36));
+//   layer_add_child(base.canvasLayer,bitmap_layer_get_layer(base.weatherIcon3Layer));
+//   bitmap_layer_set_compositing_mode(base.weatherIcon3Layer,GCompOpSet);
+  
 }
 
 static void main_window_unload(Window *window){
   fonts_unload_custom_font(base.calFont);
+//   gbitmap_destroy(base.weatherIcon01);
+//   gbitmap_destroy(base.weatherIcon02);
+//   gbitmap_destroy(base.weatherIcon03);
+//   gbitmap_destroy(base.weatherIcon09);
+//   gbitmap_destroy(base.weatherIcon10);
+//   gbitmap_destroy(base.weatherIcon11);
+//   gbitmap_destroy(base.weatherIcon13);
+//   gbitmap_destroy(base.weatherIcon50);
   layer_destroy(base.minutesLayer);
+//   bitmap_layer_destroy(base.weatherIcon1Layer);
+//   bitmap_layer_destroy(base.weatherIcon2Layer);
+//   bitmap_layer_destroy(base.weatherIcon3Layer);
+  layer_destroy(base.calendarLayer);
   layer_destroy(base.canvasLayer);
 }
 
@@ -305,6 +408,12 @@ static void sync_changed_handler(const uint32_t key, const Tuple *new_tuple, con
       base.lastSync=time(NULL);
       layer_mark_dirty(base.canvasLayer);
       break;
+    case KEY_WEATHER_CONDITION:
+      APP_LOG(APP_LOG_LEVEL_INFO, "KEY_WEATHER_CONDITION received with value %s", (char*)new_tuple->value->cstring );
+      base.weatherCondition=(char*)new_tuple->value->cstring;
+      base.lastSync=time(NULL);
+      layer_mark_dirty(base.canvasLayer);
+      break;
   }
   
 }
@@ -322,8 +431,9 @@ void handle_init(void) {
 
   // Setup initial values
   Tuplet initial_values[] = {
+    TupletInteger(KEY_RAINFALL, 0),
     TupletCString(KEY_CITY, "Loading.."),
-    TupletInteger(KEY_RAIN, 0)
+    TupletCString(KEY_WEATHER_CONDITION, ",,")
   };
   
   // Begin using AppSync
@@ -345,6 +455,7 @@ void handle_init(void) {
 }
   
 void handle_deinit(void) {
+  app_sync_deinit(&base.sync);
   window_destroy(base.window);
 }
 

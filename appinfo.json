@@ -1,7 +1,8 @@
 {
     "appKeys": {
         "KEY_CITY": 5,
-        "KEY_RAINFALL": 6
+        "KEY_RAINFALL": 6,
+        "KEY_WEATHER_CONDITION": 7
     },
     "capabilities": [
         "location"
@@ -11,6 +12,51 @@
     "projectType": "native",
     "resources": {
         "media": [
+            {
+                "file": "images/cloud.dark.fog.png",
+                "name": "IMAGE_WEATHER_CLOUD_DARK_FOG_50",
+                "type": "png"
+            },
+            {
+                "file": "images/cloud.dark.snow.png",
+                "name": "IMAGE_WEATHER_CLOUD_DARK_SNOW_13",
+                "type": "png"
+            },
+            {
+                "file": "images/cloud.dark.multiple.lightning.png",
+                "name": "IMAGE_WEATHER_CLOUD_DARK_MULTIPLE_LIGHTNING_11",
+                "type": "png"
+            },
+            {
+                "file": "images/sun.rays.cloud.drizzle.png",
+                "name": "IMAGE_WEATHER_SUN_RAY_CLOUD_DRIZZLE_10",
+                "type": "png"
+            },
+            {
+                "file": "images/cloud.dark.rain.png",
+                "name": "IMAGE_WEATHER_CLOUD_DARK_RAIN_09",
+                "type": "png"
+            },
+            {
+                "file": "images/cloud.dark.png",
+                "name": "IMAGE_WEATHER_CLOUD_DARK_04",
+                "type": "png"
+            },
+            {
+                "file": "images/cloud.png",
+                "name": "IMAGE_WEATHER_CLOUD_03",
+                "type": "png"
+            },
+            {
+                "file": "images/sun.rays.small.cloud.png",
+                "name": "IMAGE_WEATHER_SUN_RAYS_SMALL_CLOUD_02",
+                "type": "png"
+            },
+            {
+                "file": "images/sun.rays.small.png",
+                "name": "IMAGE_WEATHER_SUN_RAYS_SMALL_01",
+                "type": "png"
+            },
             {
                 "characterRegex": "[0-9A-Za-z]",
                 "file": "fonts/pf_tempesta_seven.ttf",

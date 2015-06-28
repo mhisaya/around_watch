@@ -13,12 +13,18 @@ var info = {
     town: ''
   },
   weather: {
-    lastCheck: 0,
-    rainfall: 0
+    rainfall: 0,
+    condition: ''
+  },
+  lastCheck: {
+    geocode: 0,
+    rainfall: 0,
+    weather: 0
   }
 };
 
 var RAINFALL_CHECK_INTERVAL=10*60*1000;
+var WEATHER_CHECK_INTERVAL=60*60*1000;
 
 var yahooAppId = 'dj0zaiZpPXppd29NZklaemx5dyZzPWNvbnN1bWVyc2VjcmV0Jng9ZmY-';
 
@@ -37,9 +43,51 @@ var unicodeEscape = function(str) {
 
 function executeWeather(pos){
   
+  var curDate = new Date();
+  var dateStr=[
+    1900+curDate.getYear(),
+    ('0'+(curDate.getMonth()+1)).replace(/0([1-2][0-9])/,'$1'),
+    ('0'+curDate.getDate()).replace(/0([1-3][0-9])/,'$1')
+  ].join('-');
+    
+  var curDateTimeStr = dateStr+' '+('0'+(curDate.getHours()-(curDate.getHours()%3))).replace(/0([1-2][0-9])/,'$1')+':00:00';
+  console.log('basetime='+curDateTimeStr);
+                                            
+  var req2 = new XMLHttpRequest();
+  var weatherUrl = 'http://api.openweathermap.org/data/2.5/forecast?lon='+pos.coords.longitude+'&lat='+pos.coords.latitude;
+  console.log('weather open.. url='+weatherUrl);
+  req2.open('GET', weatherUrl, true);
+  req2.onload = function(e) {
+    if (req2.readyState == 4) {
+      console.log("weather status="+req2.status);
+      if(req2.status == 200) {
+        var json = JSON.parse(req2.responseText);
+        if ( json.list!=null ){
+          var dispData = [];
+          for ( var i=0 ; i<json.list.length && dispData.length<3 ; i++ ){
+            var data = json.list[i];
+            if ( curDateTimeStr < data.dt_txt ){
+              dispData.push(data.weather[0].icon+String(data.weather[0].id));
+            }
+          }
+          info.weather.condition=dispData.join(',');
+          console.log('weather condition='+info.weather.condition);
+          Pebble.sendAppMessage({ 'KEY_WEATHER_CONDITION': info.weather.condition });
+        } else {
+          console.log('weather format Error');
+        }
+      } else { console.log('weather rest Error. http_status='+req2.status); }
+    }
+  }
+  req2.send(null);
+  info.lastCheck.weather=Date.now();
+}
+
+function executeRainfall(pos){
+  
   var req2 = new XMLHttpRequest();
   var weatherUrl = 'http://weather.olp.yahooapis.jp/v1/place?appid='+yahooAppId+'&coordinates='+pos.coords.longitude+','+pos.coords.latitude+'&output=json';
-  console.log('weather open.. url='+weatherUrl);
+  console.log('rainfall open.. url='+weatherUrl);
   req2.open('GET', weatherUrl, true);
   req2.onload = function(e) {
     if (req2.readyState == 4) {
@@ -64,13 +112,14 @@ function executeWeather(pos){
           info.weather.rainfall=maxR;
           Pebble.sendAppMessage({ 'KEY_RAINFALL': parseInt(maxR*100) });
         } else {
-          console.log('weather format Error');
+          console.log('rainfall format Error');
         }
-      } else { console.log('weather rest Error. http_status='+req2.status); }
+      } else { console.log('rainfall rest Error. http_status='+req2.status); }
+      setTimeout(function(){console.log('weather setTimeout called.');executeWeather(pos);},0);
     }
   }
   req2.send(null);
-  info.weather.lastCheck=Date.now();
+  info.lastCheck.rainfall=Date.now();
   
 }
 
@@ -93,16 +142,16 @@ function executeGeoCode(pos){
             info.addr.city = json.response.location[0].city;
             info.addr.town = json.response.location[0].town;
             info.addr.postal = json.response.location[0].postal;
-            Pebble.sendAppMessage({ 'KEY_CITY': city });
+            Pebble.sendAppMessage({ 'KEY_CITY': info.addr.city });
             console.log('sendAppMessage city!');
           
-            setTimeout(function(){console.log('weatcher setTimeout called.');executeWeather(pos);},0);
+            setTimeout(function(){console.log('rainfall setTimeout called.');executeRainfall(pos);},0);
             return;
           }
         }
-        console.log('city unchanged. skip...');
+        console.log('geoapi Error');
         
-      } else { console.log('geiapi Error'); }
+      } else { console.log('geoapi Error status='+req.status); }
     }
   }
   req.send(null);
@@ -111,12 +160,19 @@ function executeGeoCode(pos){
 
 function locationSuccess(pos) {
   
+  pos={
+    coords: {
+      latitude: 34.966671,
+      longitude: 138.933334
+    }
+  };
+  
   console.log('Location changed!!');
   console.log('lat= ' + pos.coords.latitude + ' lon= ' + pos.coords.longitude);
   if ( info.pos.latitude==pos.coords.latitude && info.pos.longitude==pos.coords.longitude ){
     console.log('unmoved. skip...');
-    if ( info.weather.lastCheck + RAINFALL_CHECK_INTERVAL < Date.now() ){
-      setTimeout(function(){console.log('weatcher setTimeout called.');executeWeather(pos);},0);
+    if ( info.lastCheck.rainfall + RAINFALL_CHECK_INTERVAL < Date.now() ){
+      setTimeout(function(){console.log('weatcher setTimeout called.');executeRainfall(pos);},0);
     }
     return;
   }
