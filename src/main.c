@@ -146,8 +146,15 @@ static int16_t adjustCanvasY(int y){
   
 }
 
+static void mstrncpy(char* dst, char*src, size_t len){
+  memset(dst,0,len+1);
+  memcpy(dst,src,len);
+}
+
 
 static void minutesLayer_update_proc(Layer *this_layer, GContext *ctx) {
+  
+  APP_LOG(APP_LOG_LEVEL_INFO, "minutesLayer_update_proc start");
   
   uint8_t radius = minutesRadius;
   struct tm *curTime = localtime(&(base.currentTime));
@@ -268,11 +275,11 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                     );  
 
 
-  char hour1[32];
+  char hour1[4];
+  mstrncpy(hour1,base.weatherCondition,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon1Layer),GRect(adjustCanvasX(16),adjustCanvasY(36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon1Layer,getWeatherIcon(0));
   GRect textHour1 = GRect(adjustCanvasX(16),adjustCanvasY(75),20,20);
-  strncpy(hour1,base.weatherCondition,2); hour1[2]='\0';
   graphics_draw_text(ctx,hour1,base.calFont,
                      textHour1,
                      GTextOverflowModeTrailingEllipsis ,
@@ -280,11 +287,12 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  char hour2[32];
+  char hour2[4];
+  mstrncpy(hour2,base.weatherCondition+9,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon2Layer),GRect(adjustCanvasX(54),adjustCanvasY(36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon2Layer,getWeatherIcon(1));
   GRect textHour2 = GRect(adjustCanvasX(54),adjustCanvasY(75),20,20);
-  strncpy(hour2,base.weatherCondition+9,2); hour2[2]='\0';
+  
   graphics_draw_text(ctx,hour2,base.calFont,
                      textHour2,
                      GTextOverflowModeTrailingEllipsis ,
@@ -292,11 +300,11 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  char hour3[32];
+  char hour3[4];
+  mstrncpy(hour3,base.weatherCondition+18,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon3Layer),GRect(adjustCanvasX(92),adjustCanvasY(36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
   GRect textHour3 = GRect(adjustCanvasX(92),adjustCanvasY(75),20,20);
-  strncpy(hour3,base.weatherCondition+18,2);  hour3[2]='\0';
   graphics_draw_text(ctx,hour3,base.calFont,
                      textHour3,
                      GTextOverflowModeTrailingEllipsis ,
@@ -316,6 +324,8 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
 }
   
 static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
+  
+  APP_LOG(APP_LOG_LEVEL_INFO, "calendarLayer_update_proc start");
   
   time_t curTime = base.currentTime;
   struct tm *today = localtime(&curTime);
@@ -375,6 +385,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
 }
 
 static void main_window_load(Window *window){
+  
   Layer *window_layer = window_get_root_layer(window);
   GRect window_bounds = layer_get_bounds(window_layer);
   
@@ -442,6 +453,7 @@ static void set_current_time(){
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
 
+  APP_LOG(APP_LOG_LEVEL_INFO, "tick_handler start");
   set_current_time();
   layer_mark_dirty(base.minutesLayer);
 
