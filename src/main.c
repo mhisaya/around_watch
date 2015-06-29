@@ -26,6 +26,7 @@ static struct Base {
   char *weatherCondition;
   
   time_t currentTime;
+  uint16_t currentMin;
   
   AppSync sync;
   uint8_t syncBuffer[512];
@@ -117,11 +118,40 @@ static GPoint calcMinPos(GRect bounds, uint16_t min, uint8_t radius){
   return GPoint(x+bounds.size.w/2,y+bounds.size.h/2);  
 }
 
+static int16_t adjustCanvasX(int x){
+  
+  if ( base.currentMin<180 ){
+    return x;    
+  } else if ( base.currentMin<360 ){
+    return x;
+  } else if ( base.currentMin<540 ){
+    return x+minutesRadius;
+  } else {
+    return x+minutesRadius;
+  }
+  
+}
+
+static int16_t adjustCanvasY(int y){
+  
+  if ( base.currentMin<180 ){
+    return y+minutesRadius;    
+  } else if ( base.currentMin<360 ){
+    return y;
+  } else if ( base.currentMin<540 ){
+    return y;
+  } else {
+    return y+minutesRadius;  
+  }
+  
+}
+
+
 static void minutesLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   uint8_t radius = minutesRadius;
   struct tm *curTime = localtime(&(base.currentTime));
-  uint16_t min = (curTime->tm_hour%12)*60+curTime->tm_min;
+  uint16_t min = base.currentMin;
   char ch[100];
   strftime(ch,100,"%02M",curTime);
   
@@ -220,14 +250,16 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   }
   
   graphics_context_set_fill_color(ctx,GColorWhite);
-  bounds.size.w = bounds.size.w-minutesRadius*2;
-  bounds.size.h = bounds.size.h-minutesRadius*2;
-  bounds.origin.x = bounds.origin.x+minutesRadius;  
-  bounds.origin.y = bounds.origin.y+minutesRadius;  
-  graphics_fill_rect(ctx,bounds,0,GCornerNone);
+  graphics_fill_rect(ctx,
+    GRect( 
+          adjustCanvasX(bounds.origin.x),
+          adjustCanvasY(bounds.origin.y),
+          bounds.size.w-minutesRadius,
+          bounds.size.h-minutesRadius )
+    ,0,GCornerNone);
   
   graphics_context_set_text_color(ctx, GColorBlack);
-  GRect textFrame = GRect(20,16,100,20);
+  GRect textFrame = GRect(adjustCanvasX(20),adjustCanvasY(16),100,20);
       graphics_draw_text(ctx,base.location,fonts_get_system_font(FONT_KEY_GOTHIC_18),
                      textFrame,
                      GTextOverflowModeTrailingEllipsis ,
@@ -235,9 +267,11 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );  
 
+
   char hour1[32];
+  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon1Layer),GRect(adjustCanvasX(16),adjustCanvasY(36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon1Layer,getWeatherIcon(0));
-  GRect textHour1 = GRect(16,75,20,20);
+  GRect textHour1 = GRect(adjustCanvasX(16),adjustCanvasY(75),20,20);
   strncpy(hour1,base.weatherCondition,2); hour1[2]='\0';
   graphics_draw_text(ctx,hour1,base.calFont,
                      textHour1,
@@ -247,8 +281,9 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                     );
   
   char hour2[32];
+  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon2Layer),GRect(adjustCanvasX(54),adjustCanvasY(36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon2Layer,getWeatherIcon(1));
-  GRect textHour2 = GRect(54,75,20,20);
+  GRect textHour2 = GRect(adjustCanvasX(54),adjustCanvasY(75),20,20);
   strncpy(hour2,base.weatherCondition+9,2); hour2[2]='\0';
   graphics_draw_text(ctx,hour2,base.calFont,
                      textHour2,
@@ -258,7 +293,9 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                     );
   
   char hour3[32];
-  GRect textHour3 = GRect(92,75,20,20);
+  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon3Layer),GRect(adjustCanvasX(92),adjustCanvasY(36),36,36));
+  bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
+  GRect textHour3 = GRect(adjustCanvasX(92),adjustCanvasY(75),20,20);
   strncpy(hour3,base.weatherCondition+18,2);  hour3[2]='\0';
   graphics_draw_text(ctx,hour3,base.calFont,
                      textHour3,
@@ -266,11 +303,10 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      GTextAlignmentCenter ,
                      NULL
                     );
-  bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
   
-  GRect textFrame2 = GRect(20,85,100,10);
+  GRect textFrame2 = GRect(adjustCanvasX(20),adjustCanvasY(85),100,10);
   char rainFallStr[64];
-  snprintf(rainFallStr,sizeof(rainFallStr),"rf: %ld, last: %ld",base.rainfall,(time(NULL)-base.lastSync)/60);
+  snprintf(rainFallStr,sizeof(rainFallStr),"rf: %ld, last: %ld",base.rainfall,(base.currentTime-base.lastSync)/60);
       graphics_draw_text(ctx,rainFallStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
                      textFrame2,
                      GTextOverflowModeTrailingEllipsis ,
@@ -281,7 +317,7 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
 static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
-  time_t curTime = time(NULL);
+  time_t curTime = base.currentTime;
   struct tm *today = localtime(&curTime);
   
   uint8_t today_pos = today->tm_wday+7;
@@ -295,8 +331,8 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   GRect bounds = layer_get_bounds(this_layer);
   
-  uint8_t bx=20;
-  uint8_t by=110;
+  uint8_t bx=adjustCanvasX(20);
+  uint8_t by=adjustCanvasY(110);
   uint8_t xpitch=15;
   uint8_t cpitch=6;
   uint8_t ypitch=12;
@@ -398,9 +434,15 @@ static void main_window_unload(Window *window){
   layer_destroy(base.canvasLayer);
 }
 
-static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
-  
+static void set_current_time(){
   base.currentTime = time(NULL);
+  struct tm *curTime = localtime(&(base.currentTime));
+  base.currentMin = (curTime->tm_hour%12)*60+curTime->tm_min;
+}
+
+static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
+
+  set_current_time();
   layer_mark_dirty(base.minutesLayer);
 
 }
@@ -439,6 +481,7 @@ void handle_init(void) {
   base.location="(init)";
   base.weatherCondition="__01d800,__01d800,__01d800";
   base.lastSync=0;
+  set_current_time();
   
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 
