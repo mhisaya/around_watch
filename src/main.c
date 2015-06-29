@@ -151,8 +151,8 @@ static void minutesLayer_update_proc(Layer *this_layer, GContext *ctx) {
 
 static GBitmap *getWeatherIcon(uint8_t offset){
   
-  uint8_t pos=offset*7;
-  uint8_t icon=(base.weatherCondition[pos]-'0')*10+base.weatherCondition[pos+1]-'0';
+  uint8_t pos=offset*9;
+  uint8_t icon=(base.weatherCondition[pos+2]-'0')*10+base.weatherCondition[pos+3]-'0';
 
   GBitmap *iconBitmap;
   switch (icon){
@@ -189,6 +189,8 @@ static GBitmap *getWeatherIcon(uint8_t offset){
 }
 
 static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
+  
+  APP_LOG(APP_LOG_LEVEL_INFO, "canvasLayer_update_proc start");
   
   GRect bounds = layer_get_bounds(this_layer);
   graphics_context_set_fill_color(ctx,GColorFromRGB(180,180,255));
@@ -233,11 +235,40 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );  
 
+  char hour1[32];
   bitmap_layer_set_bitmap(base.weatherIcon1Layer,getWeatherIcon(0));
+  GRect textHour1 = GRect(16,75,20,20);
+  strncpy(hour1,base.weatherCondition,2); hour1[2]='\0';
+  graphics_draw_text(ctx,hour1,base.calFont,
+                     textHour1,
+                     GTextOverflowModeTrailingEllipsis ,
+                     GTextAlignmentCenter ,
+                     NULL
+                    );
+  
+  char hour2[32];
   bitmap_layer_set_bitmap(base.weatherIcon2Layer,getWeatherIcon(1));
+  GRect textHour2 = GRect(54,75,20,20);
+  strncpy(hour2,base.weatherCondition+9,2); hour2[2]='\0';
+  graphics_draw_text(ctx,hour2,base.calFont,
+                     textHour2,
+                     GTextOverflowModeTrailingEllipsis ,
+                     GTextAlignmentCenter ,
+                     NULL
+                    );
+  
+  char hour3[32];
+  GRect textHour3 = GRect(92,75,20,20);
+  strncpy(hour3,base.weatherCondition+18,2);  hour3[2]='\0';
+  graphics_draw_text(ctx,hour3,base.calFont,
+                     textHour3,
+                     GTextOverflowModeTrailingEllipsis ,
+                     GTextAlignmentCenter ,
+                     NULL
+                    );
   bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
   
-  GRect textFrame2 = GRect(20,75,100,10);
+  GRect textFrame2 = GRect(20,85,100,10);
   char rainFallStr[64];
   snprintf(rainFallStr,sizeof(rainFallStr),"rf: %ld, last: %ld",base.rainfall,(time(NULL)-base.lastSync)/60);
       graphics_draw_text(ctx,rainFallStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
@@ -406,7 +437,7 @@ static void sync_error_handler(DictionaryResult dict_error, AppMessageResult app
 void handle_init(void) {
   
   base.location="(init)";
-  base.weatherCondition="01d800,01d800,01d800";
+  base.weatherCondition="__01d800,__01d800,__01d800";
   base.lastSync=0;
   
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
@@ -415,7 +446,7 @@ void handle_init(void) {
   Tuplet initial_values[] = {
     TupletInteger(KEY_RAINFALL, 0),
     TupletCString(KEY_CITY, "Loading.."),
-    TupletCString(KEY_WEATHER_CONDITION, "01d800,01d800,01d800")
+    TupletCString(KEY_WEATHER_CONDITION, "__01d800,__01d800,__01d800")
   };
   
   // Begin using AppSync

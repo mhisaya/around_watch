@@ -54,7 +54,7 @@ function executeWeather(pos){
   console.log('basetime='+curDateTimeStr);
                                             
   var req2 = new XMLHttpRequest();
-  var weatherUrl = 'http://api.openweathermap.org/data/2.5/forecast?lon='+pos.coords.longitude+'&lat='+pos.coords.latitude;
+  var weatherUrl = 'http://api.openweathermap.org/data/2.5/forecast?units=metric&lon='+pos.coords.longitude+'&lat='+pos.coords.latitude;
   console.log('weather open.. url='+weatherUrl);
   req2.open('GET', weatherUrl, true);
   req2.onload = function(e) {
@@ -67,7 +67,7 @@ function executeWeather(pos){
           for ( var i=0 ; i<json.list.length && dispData.length<3 ; i++ ){
             var data = json.list[i];
             if ( curDateTimeStr < data.dt_txt ){
-              dispData.push(data.weather[0].icon+String(data.weather[0].id));
+              dispData.push(data.dt_txt.substr(11,2)+data.weather[0].icon+String(data.weather[0].id));
             }
           }
           info.weather.condition=dispData.join(',');
