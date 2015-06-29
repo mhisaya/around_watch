@@ -229,9 +229,13 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   APP_LOG(APP_LOG_LEVEL_INFO, "canvasLayer_update_proc start");
   
+  ////// clear
+  
   GRect bounds = layer_get_bounds(this_layer);
   graphics_context_set_fill_color(ctx,GColorFromRGB(180,180,255));
   graphics_fill_rect(ctx,bounds,0,GCornerNone);
+  
+  ////// clock frame
 
   struct tm *curTime = localtime(&(base.currentTime));
   uint8_t curHour = (curTime->tm_hour%12);
@@ -265,8 +269,13 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
           bounds.size.h-minutesRadius )
     ,0,GCornerNone);
   
+  int16_t baseX=-minutesRadius/2;
+  int16_t baseY=-minutesRadius/2;
+  
+  ////// location
+  
   graphics_context_set_text_color(ctx, GColorBlack);
-  GRect textFrame = GRect(adjustCanvasX(20),adjustCanvasY(16),100,20);
+  GRect textFrame = GRect(adjustCanvasX(baseX+20),adjustCanvasY(baseY+16),100,20);
       graphics_draw_text(ctx,base.location,fonts_get_system_font(FONT_KEY_GOTHIC_18),
                      textFrame,
                      GTextOverflowModeTrailingEllipsis ,
@@ -274,12 +283,13 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );  
 
+  ////// weather icons
 
   char hour1[4];
   mstrncpy(hour1,base.weatherCondition,2);
-  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon1Layer),GRect(adjustCanvasX(16),adjustCanvasY(36),36,36));
+  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon1Layer),GRect(adjustCanvasX(baseX+16),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon1Layer,getWeatherIcon(0));
-  GRect textHour1 = GRect(adjustCanvasX(16),adjustCanvasY(75),20,20);
+  GRect textHour1 = GRect(adjustCanvasX(baseX+16),adjustCanvasY(baseY+75),20,20);
   graphics_draw_text(ctx,hour1,base.calFont,
                      textHour1,
                      GTextOverflowModeTrailingEllipsis ,
@@ -289,9 +299,9 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   char hour2[4];
   mstrncpy(hour2,base.weatherCondition+9,2);
-  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon2Layer),GRect(adjustCanvasX(54),adjustCanvasY(36),36,36));
+  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon2Layer),GRect(adjustCanvasX(baseX+54),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon2Layer,getWeatherIcon(1));
-  GRect textHour2 = GRect(adjustCanvasX(54),adjustCanvasY(75),20,20);
+  GRect textHour2 = GRect(adjustCanvasX(baseX+54),adjustCanvasY(baseY+75),20,20);
   
   graphics_draw_text(ctx,hour2,base.calFont,
                      textHour2,
@@ -302,9 +312,9 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   char hour3[4];
   mstrncpy(hour3,base.weatherCondition+18,2);
-  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon3Layer),GRect(adjustCanvasX(92),adjustCanvasY(36),36,36));
+  layer_set_frame(bitmap_layer_get_layer(base.weatherIcon3Layer),GRect(adjustCanvasX(baseX+92),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
-  GRect textHour3 = GRect(adjustCanvasX(92),adjustCanvasY(75),20,20);
+  GRect textHour3 = GRect(adjustCanvasX(baseX+92),adjustCanvasY(baseY+75),20,20);
   graphics_draw_text(ctx,hour3,base.calFont,
                      textHour3,
                      GTextOverflowModeTrailingEllipsis ,
@@ -312,7 +322,9 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  GRect textFrame2 = GRect(adjustCanvasX(20),adjustCanvasY(85),100,10);
+  ////// debug
+  
+  GRect textFrame2 = GRect(adjustCanvasX(baseX+20),adjustCanvasY(baseY+85),100,10);
   char rainFallStr[64];
   snprintf(rainFallStr,sizeof(rainFallStr),"rf: %ld, last: %ld",base.rainfall,(base.currentTime-base.lastSync)/60);
       graphics_draw_text(ctx,rainFallStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
@@ -341,8 +353,8 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   GRect bounds = layer_get_bounds(this_layer);
   
-  uint8_t bx=adjustCanvasX(20);
-  uint8_t by=adjustCanvasY(110);
+  uint8_t bx=adjustCanvasX(20-minutesRadius/2);
+  uint8_t by=adjustCanvasY(110-minutesRadius/2);
   uint8_t xpitch=15;
   uint8_t cpitch=6;
   uint8_t ypitch=12;
