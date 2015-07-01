@@ -67,7 +67,16 @@ function executeWeather(pos){
           for ( var i=0 ; i<json.list.length && dispData.length<3 ; i++ ){
             var data = json.list[i];
             if ( curDateTimeStr < data.dt_txt ){
-              dispData.push(data.dt_txt.substr(11,2)+data.weather[0].icon+String(data.weather[0].id));
+              // hour[2]+icon[3]+id[3]+temp[3]
+              var temp;
+              if ( data.main.temp>=0 ){
+                temp='0'+(Math.floor(data.main.temp));
+                 temp='0'+temp.substr(temp.length-2,2);
+              } else {
+                temp='0'+(Math.floor(-data.main.temp));
+                temp='-'+temp.substr(temp.length-2,2);
+              }
+              dispData.push(data.dt_txt.substr(11,2)+data.weather[0].icon+String(data.weather[0].id)+temp);
             }
           }
           info.weather.condition=dispData.join(',');

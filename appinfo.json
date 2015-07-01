@@ -13,6 +13,12 @@
     "resources": {
         "media": [
             {
+                "characterRegex": "[0-9A-Za-z]",
+                "file": "fonts/SourceSansPro-Semibold.ttf",
+                "name": "FONT_SOURSESANSPRO_SEMIBOLD_24",
+                "type": "font"
+            },
+            {
                 "file": "images/cloud.dark.fog.png",
                 "name": "IMAGE_WEATHER_CLOUD_DARK_FOG_50",
                 "type": "png"
