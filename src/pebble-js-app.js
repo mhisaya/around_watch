@@ -23,7 +23,7 @@ var info = {
   }
 };
 
-var RAINFALL_CHECK_INTERVAL=10*60*1000;
+var RAINFALL_CHECK_INTERVAL=30*60*1000;
 var WEATHER_CHECK_INTERVAL=60*60*1000;
 
 var yahooAppId = 'dj0zaiZpPXppd29NZklaemx5dyZzPWNvbnN1bWVyc2VjcmV0Jng9ZmY-';
