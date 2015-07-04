@@ -171,8 +171,8 @@ function locationSuccess(pos) {
   
 //   pos={
 //     coords: {
-//       latitude: 34.966671,
-//       longitude: 138.933334
+//       latitude: 35.5081053,
+//       longitude: 139.6671164
 //     }
 //   };
   

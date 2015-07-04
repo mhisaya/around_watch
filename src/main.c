@@ -59,6 +59,12 @@ int16_t cos_array[720] = {
   128,127,127,127,127,127,127,127,127,127,127,127,127,127,127,126,126,126,126,126,126,125,125,125,125,124,124,124,124,123,123,123,123,122,122,122,121,121,121,120,120,119,119,119,118,118,117,117,116,116,116,115,115,114,114,113,113,112,111,111,110,110,109,109,108,107,107,106,106,105,104,104,103,102,102,101,100,100,99,98,98,97,96,95,95,94,93,92,92,91,90,89,88,88,87,86,85,84,83,83,82,81,80,79,78,77,77,76,75,74,73,72,71,70,69,68,67,66,65,64,64,63,62,61,60,59,58,57,56,55,54,53,52,51,50,48,47,46,45,44,43,42,41,40,39,38,37,36,35,34,33,32,30,29,28,27,26,25,24,23,22,21,20,18,17,16,15,14,13,12,11,10,8,7,6,5,4,3,2,1,0,-2,-3,-4,-5,-6,-7,-8,-9,-11,-12,-13,-14,-15,-16,-17,-18,-19,-21,-22,-23,-24,-25,-26,-27,-28,-29,-30,-31,-33,-34,-35,-36,-37,-38,-39,-40,-41,-42,-43,-44,-45,-46,-47,-48,-49,-51,-52,-53,-54,-55,-56,-57,-58,-59,-60,-61,-62,-63,-64,-64,-65,-66,-67,-68,-69,-70,-71,-72,-73,-74,-75,-76,-77,-78,-78,-79,-80,-81,-82,-83,-84,-84,-85,-86,-87,-88,-89,-89,-90,-91,-92,-93,-93,-94,-95,-96,-96,-97,-98,-99,-99,-100,-101,-101,-102,-103,-103,-104,-105,-105,-106,-107,-107,-108,-108,-109,-110,-110,-111,-111,-112,-112,-113,-114,-114,-115,-115,-116,-116,-117,-117,-117,-118,-118,-119,-119,-120,-120,-120,-121,-121,-122,-122,-122,-123,-123,-123,-124,-124,-124,-124,-125,-125,-125,-125,-126,-126,-126,-126,-127,-127,-127,-127,-127,-127,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-128,-127,-127,-127,-127,-127,-127,-126,-126,-126,-126,-125,-125,-125,-125,-124,-124,-124,-124,-123,-123,-123,-122,-122,-122,-121,-121,-120,-120,-120,-119,-119,-118,-118,-117,-117,-117,-116,-116,-115,-115,-114,-114,-113,-112,-112,-111,-111,-110,-110,-109,-108,-108,-107,-107,-106,-105,-105,-104,-103,-103,-102,-101,-101,-100,-99,-99,-98,-97,-96,-96,-95,-94,-93,-93,-92,-91,-90,-89,-89,-88,-87,-86,-85,-84,-84,-83,-82,-81,-80,-79,-78,-78,-77,-76,-75,-74,-73,-72,-71,-70,-69,-68,-67,-66,-65,-65,-64,-63,-62,-61,-60,-59,-58,-57,-56,-55,-54,-53,-52,-51,-49,-48,-47,-46,-45,-44,-43,-42,-41,-40,-39,-38,-37,-36,-35,-34,-33,-31,-30,-29,-28,-27,-26,-25,-24,-23,-22,-21,-19,-18,-17,-16,-15,-14,-13,-12,-11,-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17,18,20,21,22,23,24,25,26,27,28,29,30,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,64,65,66,67,68,69,70,71,72,73,74,75,76,77,77,78,79,80,81,82,83,83,84,85,86,87,88,88,89,90,91,92,92,93,94,95,95,96,97,98,98,99,100,100,101,102,102,103,104,104,105,106,106,107,107,108,109,109,110,110,111,111,112,113,113,114,114,115,115,116,116,116,117,117,118,118,119,119,119,120,120,121,121,121,122,122,122,123,123,123,123,124,124,124,124,125,125,125,125,126,126,126,126,126,126,127,127,127,127,127,127,127,127,127,127,127,127,127,127
 };
 
+static void set_current_time(){
+  base.currentTime = time(NULL)+0*60*60;
+  struct tm *curTime = localtime(&(base.currentTime));
+  base.currentMin = (curTime->tm_hour%12)*60+curTime->tm_min;
+}
+
 // 0<=min<=720
 static uint16_t clock2degree720(uint16_t min){
   if ( min<=3*60 ){
@@ -159,11 +165,15 @@ static void mstrncpy(char* dst, char*src, size_t len){
   memcpy(dst,src,len);
 }
 
+////////////////////////////////////////////////////////////////////////////////////
+
 static void minutesLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   APP_LOG(APP_LOG_LEVEL_INFO, "minutesLayer_update_proc start");
   
   uint8_t radius = 20;
+  uint8_t boxWidth = 24;
+  uint8_t boxHeight = 24;
   struct tm *curTime = localtime(&(base.currentTime));
   uint16_t min = base.currentMin;
   char ch[100];
@@ -183,7 +193,26 @@ static void minutesLayer_update_proc(Layer *this_layer, GContext *ctx) {
 //   graphics_context_set_antialiased(ctx, true);
 //   graphics_draw_circle(ctx,center,radius);
 
-  GRect textFrame = GRect(center.x-radius,center.y-radius,radius*2,radius*2 );
+  // check text size ( for debug )
+//   GSize textSize = graphics_text_layout_get_content_size(
+//     ch,base.minFont,GRect(0,0,32,20),
+//     GTextOverflowModeTrailingEllipsis,
+//     GTextAlignmentCenter
+//     );
+//   APP_LOG(APP_LOG_LEVEL_INFO, "text size w=%d, h=%d", textSize.w, textSize.h);
+//   APP_LOG(APP_LOG_LEVEL_INFO, "center pos x=%d, y=%d", center.x, center.y);
+//   APP_LOG(APP_LOG_LEVEL_INFO, "layer size w=%d, h=%d", bounds.size.w, bounds.size.h);
+  
+  GRect textFrame;
+  if ( center.x<=radius ){
+    textFrame = GRect( 0, center.y-boxHeight/2, boxWidth, boxHeight );
+  } else if ( center.x>=bounds.size.w-radius ){
+    textFrame = GRect( bounds.size.w-boxWidth, center.y-boxHeight/2, boxWidth, boxHeight );
+  } else if ( center.y<=radius ) {
+    textFrame = GRect( center.x-boxWidth/2, -4, boxWidth, boxHeight );
+  } else {
+    textFrame = GRect( center.x-boxWidth/2, bounds.size.h-boxHeight-4, boxWidth, boxHeight );
+  }
   graphics_context_set_text_color(ctx, GColorBlack);
   graphics_draw_text(ctx,ch,base.minFont, // fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD),
                      textFrame,
@@ -191,6 +220,7 @@ static void minutesLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      GTextAlignmentCenter ,
                      NULL
                     );
+  
 }
 
 static int8_t WEATHER_INFO_LENGTH=12;
@@ -233,6 +263,8 @@ static GBitmap *getWeatherIcon(uint8_t offset){
   }
   return iconBitmap; 
 }
+
+////////////////////////////////////////////////////////////////////////////////////
 
 static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
@@ -279,6 +311,8 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
     ,0,GCornerNone);
   
 }
+
+////////////////////////////////////////////////////////////////////////////////////
   
 static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
@@ -358,7 +392,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
 
   ////// weather icons
 
-  char hour1[4];
+  char hour1[8];
   mstrncpy(hour1,base.weatherCondition,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon1Layer),GRect(adjustCanvasX(baseX+16),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon1Layer,getWeatherIcon(0));
@@ -369,7 +403,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      GTextAlignmentCenter ,
                      NULL
                     );
-  char temp1[4];
+  char temp1[8];
   mstrncpy(temp1,base.weatherCondition+9,3);
   GRect textTemp1 = GRect(adjustCanvasX(baseX+28),adjustCanvasY(baseY+80),20,20);
   graphics_draw_text(ctx,temp1,base.calFont,
@@ -379,7 +413,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  char hour2[4];
+  char hour2[8];
   mstrncpy(hour2,base.weatherCondition+WEATHER_INFO_LENGTH,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon2Layer),GRect(adjustCanvasX(baseX+54),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon2Layer,getWeatherIcon(1));
@@ -390,7 +424,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      GTextAlignmentCenter ,
                      NULL
                     );
-  char temp2[4];
+  char temp2[8];
   mstrncpy(temp2,base.weatherCondition+WEATHER_INFO_LENGTH+9,3);
   GRect textTemp2 = GRect(adjustCanvasX(baseX+66),adjustCanvasY(baseY+80),20,20);
   graphics_draw_text(ctx,temp2,base.calFont,
@@ -400,7 +434,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  char hour3[4];
+  char hour3[8];
   mstrncpy(hour3,base.weatherCondition+WEATHER_INFO_LENGTH*2,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon3Layer),GRect(adjustCanvasX(baseX+92),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
@@ -411,7 +445,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      GTextAlignmentCenter ,
                      NULL
                     );
-  char temp3[4];
+  char temp3[8];
   mstrncpy(temp3,base.weatherCondition+WEATHER_INFO_LENGTH*2+9,3);
   GRect textTemp3 = GRect(adjustCanvasX(baseX+104),adjustCanvasY(baseY+80),20,20);
   graphics_draw_text(ctx,temp3,base.calFont,
@@ -425,7 +459,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   GRect textFrame2 = GRect(adjustCanvasX(baseX+20),adjustCanvasY(baseY+142),100,10);
   char rainFallStr[64];
-  snprintf(rainFallStr,sizeof(rainFallStr),"rf: %ld, last: %ld",base.rainfall,(base.currentTime-base.lastSync)/60);
+  snprintf(rainFallStr,32,"rf: %ld, last: %ld",base.rainfall,(base.currentTime-base.lastSync)/60);
       graphics_draw_text(ctx,rainFallStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
                      textFrame2,
                      GTextOverflowModeTrailingEllipsis ,
@@ -496,12 +530,6 @@ static void main_window_unload(Window *window){
   bitmap_layer_destroy(base.weatherIcon3Layer);
   layer_destroy(base.calendarLayer);
   layer_destroy(base.canvasLayer);
-}
-
-static void set_current_time(){
-  base.currentTime = time(NULL);
-  struct tm *curTime = localtime(&(base.currentTime));
-  base.currentMin = (curTime->tm_hour%12)*60+curTime->tm_min;
 }
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed) {
