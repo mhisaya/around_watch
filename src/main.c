@@ -30,9 +30,8 @@ static struct Base {
   uint16_t currentMin;
   
   AppSync sync;
-  uint8_t syncBuffer[512];
   time_t lastSync;
-  
+  uint8_t syncBuffer[512];
   
 } base;
 
@@ -313,7 +312,11 @@ static void canvasLayer_update_proc(Layer *this_layer, GContext *ctx) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
-  
+
+static struct {
+  char rainFallStr[64];
+} calendarBuff;
+
 static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   
   APP_LOG(APP_LOG_LEVEL_INFO, "calendarLayer_update_proc start");
@@ -339,17 +342,31 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   uint8_t ypitch=12;
   char ch[16];
   
-  graphics_context_set_text_color(ctx, GColorBlack);
-  
   for ( uint8_t y=0 ; y<3 ; y++ ){
     for ( uint8_t x=0 ; x<7 ; x++ ){
  
+      GRect dayRect = GRect(bx+x*xpitch-1,by+y*ypitch-1,cpitch+8+1,ypitch-2+1);
+      
+      if ( x==0 ){
+        // Sunday
+        graphics_context_set_fill_color(ctx,GColorFromRGB(255,32,32));
+        graphics_fill_rect(ctx,dayRect,2,GCornersAll);
+        graphics_context_set_text_color(ctx, GColorWhite);
+      } else if ( x==6 ){
+        // Saturday
+        graphics_context_set_fill_color(ctx,GColorFromRGB(32,32,255));
+        graphics_fill_rect(ctx,dayRect,2,GCornersAll);
+        graphics_context_set_text_color(ctx, GColorWhite);
+      } else {
+        graphics_context_set_text_color(ctx, GColorBlack);
+      }
+      
       if ( today_pos==x+y*7 ){
+        GRect todayRect = GRect(bx+x*xpitch-3,by+y*ypitch-2,cpitch+8+3,ypitch-2+3);
         graphics_context_set_stroke_width(ctx,1);
         graphics_context_set_stroke_color(ctx, GColorBlack);
-        graphics_draw_line(ctx,
-                           GPoint(bx+x*xpitch,by+(y+1)*ypitch-2),
-                           GPoint(bx+x*xpitch+cpitch*2+1,by+(y+1)*ypitch-2));
+        
+        graphics_draw_round_rect(ctx,dayRect,2);
       }
       
       uint8_t mday = calData[x+y*7];
@@ -379,6 +396,18 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
   int16_t baseX=-minutesRadius/2;
   int16_t baseY=-minutesRadius/2;
   
+  ////// debug
+  
+  graphics_context_set_text_color(ctx, GColorBlack);
+  GRect textFrame2 = GRect(adjustCanvasX(baseX+20),adjustCanvasY(baseY+142),100,10);
+  snprintf(calendarBuff.rainFallStr,32,"rf: %ld, last: %ld",base.rainfall,(base.currentTime-base.lastSync)/60);
+      graphics_draw_text(ctx,calendarBuff.rainFallStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
+                     textFrame2,
+                     GTextOverflowModeTrailingEllipsis ,
+                     GTextAlignmentCenter ,
+                     NULL
+                    );
+  
   ////// location
   
   graphics_context_set_text_color(ctx, GColorBlack);
@@ -392,10 +421,10 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
 
   ////// weather icons
 
-  char hour1[8];
-  mstrncpy(hour1,base.weatherCondition,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon1Layer),GRect(adjustCanvasX(baseX+16),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon1Layer,getWeatherIcon(0));
+  char hour1[8];
+  mstrncpy(hour1,base.weatherCondition,2);
   GRect textHour1 = GRect(adjustCanvasX(baseX+12),adjustCanvasY(baseY+72),20,20);
   graphics_draw_text(ctx,hour1,base.calFont,
                      textHour1,
@@ -403,6 +432,7 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      GTextAlignmentCenter ,
                      NULL
                     );
+  
   char temp1[8];
   mstrncpy(temp1,base.weatherCondition+9,3);
   GRect textTemp1 = GRect(adjustCanvasX(baseX+28),adjustCanvasY(baseY+80),20,20);
@@ -413,10 +443,10 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  char hour2[8];
-  mstrncpy(hour2,base.weatherCondition+WEATHER_INFO_LENGTH,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon2Layer),GRect(adjustCanvasX(baseX+54),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon2Layer,getWeatherIcon(1));
+  char hour2[8];
+  mstrncpy(hour2,base.weatherCondition+WEATHER_INFO_LENGTH,2);
   GRect textHour2 = GRect(adjustCanvasX(baseX+50),adjustCanvasY(baseY+72),20,20);
   graphics_draw_text(ctx,hour2,base.calFont,
                      textHour2,
@@ -434,10 +464,10 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  char hour3[8];
-  mstrncpy(hour3,base.weatherCondition+WEATHER_INFO_LENGTH*2,2);
   layer_set_frame(bitmap_layer_get_layer(base.weatherIcon3Layer),GRect(adjustCanvasX(baseX+92),adjustCanvasY(baseY+36),36,36));
   bitmap_layer_set_bitmap(base.weatherIcon3Layer,getWeatherIcon(2));
+  char hour3[8];
+  mstrncpy(hour3,base.weatherCondition+WEATHER_INFO_LENGTH*2,2);
   GRect textHour3 = GRect(adjustCanvasX(baseX+88),adjustCanvasY(baseY+72),20,20);
   graphics_draw_text(ctx,hour3,base.calFont,
                      textHour3,
@@ -455,17 +485,6 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
                      NULL
                     );
   
-  ////// debug
-  
-  GRect textFrame2 = GRect(adjustCanvasX(baseX+20),adjustCanvasY(baseY+142),100,10);
-  char rainFallStr[64];
-  snprintf(rainFallStr,32,"rf: %ld, last: %ld",base.rainfall,(base.currentTime-base.lastSync)/60);
-      graphics_draw_text(ctx,rainFallStr,fonts_get_system_font(FONT_KEY_GOTHIC_14),
-                     textFrame2,
-                     GTextOverflowModeTrailingEllipsis ,
-                     GTextAlignmentCenter ,
-                     NULL
-                    );
   
 }
 
