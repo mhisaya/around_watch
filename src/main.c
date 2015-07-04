@@ -362,11 +362,13 @@ static void calendarLayer_update_proc(Layer *this_layer, GContext *ctx) {
       }
       
       if ( today_pos==x+y*7 ){
-        GRect todayRect = GRect(bx+x*xpitch-3,by+y*ypitch-2,cpitch+8+3,ypitch-2+3);
-        graphics_context_set_stroke_width(ctx,1);
+//         GRect todayRect = GRect(bx+x*xpitch-3,by+y*ypitch-2,cpitch+8+3,ypitch-2+3);
+        graphics_context_set_stroke_width(ctx,2);
         graphics_context_set_stroke_color(ctx, GColorBlack);
         
-        graphics_draw_round_rect(ctx,dayRect,2);
+       graphics_draw_line(ctx,
+          GPoint(bx+x*xpitch-1,by+(y+1)*ypitch-3),
+          GPoint(bx+x*xpitch+cpitch*2+1,by+(y+1)*ypitch-3));
       }
       
       uint8_t mday = calData[x+y*7];
